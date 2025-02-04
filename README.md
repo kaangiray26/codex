@@ -1,4 +1,4 @@
-# qadoc
+# codex
 Question Answering on PDF Documents
 
 ## Resources:
