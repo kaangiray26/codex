@@ -25,10 +25,23 @@ class Codex {
                 console.error(err);
             });
     }
+
+    async upload(formData) {
+        const address = `${ADDRESS}/upload`;
+        return await fetch(address, {
+            method: "POST",
+            body: formData,
+        })
+            .then((res) => res.json())
+            .catch((err) => {
+                console.error(err);
+                return null;
+            });
+    }
 }
 
 // Attach the codex object to the window
 document.addEventListener("DOMContentLoaded", () => {
     window.codex = new Codex();
-    console.log("Codex object attached to the window");
+    console.log("Codex ready!");
 });

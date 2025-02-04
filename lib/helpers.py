@@ -13,10 +13,14 @@ def parse_config():
     # Add them as environment variables
     for key, value in config.items():
         os.environ[key] = value
-        
+
 def setup():
     # Parse the config file
     parse_config()
-    
+
     # Create necessary directories
     os.makedirs("uploads", exist_ok=True)
+
+def save_file(path: str, content: bytes):
+    with open(path, "wb") as f:
+        _ = f.write(content)

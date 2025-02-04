@@ -12,12 +12,12 @@
     </header>
     <main>
         <div class="chat-display">
-            <span class="placeholder">
+            <span class="placeholder" :loaded="store.document_loaded">
                 <github_alt />
-                Upload a file to get started
+                <i>Upload a file to get started</i>
             </span>
         </div>
-        <div class="chat-input">
+        <div class="chat-input" :disabled="!store.connected">
             <label for="file">
                 <cloud />
                 <span>Upload</span>
@@ -28,26 +28,43 @@
                 id="file"
                 accept="application/pdf"
                 @change="upload_file"
+                :disabled="!store.connected"
             />
         </div>
     </main>
+    <Client ref="client" v-if="store.connected" />
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, nextTick } from "vue";
 import { store } from "/src/assets/store.js";
 
 import cloud from "./icons/cloud.vue";
 import github_alt from "./icons/github-alt.vue";
+import Client from "./components/Client.vue";
 
 function browse_files() {
     document.querySelector("#file").click();
 }
 
 async function upload_file(event) {
-    console.log(event.target.files[0]);
     const file = event.target.files[0];
 
+    // Construct a FormData object
+    // so that we can send the file to the server
+    const formData = new FormData();
+    formData.append("file", file);
+
     // Send the file to the server
+    const response = await codex.upload(formData);
+    if (!response) {
+        alert("Document could not be uploaded. Please try again.");
+        return;
+    }
+
+    // Update the store with the response
+    store.document = response.data.document;
+    await nextTick();
+    store.document_loaded = true;
 }
 </script>

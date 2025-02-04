@@ -3,5 +3,6 @@ import { reactive } from "vue";
 
 export const store = reactive({
     connected: false,
-    count: 0,
+    document_loaded: false,
+    document: null,
 });
