@@ -1,4 +1,4 @@
-# codex
+# codex :octocat:
 Question Answering on PDF Documents
 
 ## Resources:
