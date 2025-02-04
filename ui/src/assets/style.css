@@ -1,0 +1,181 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+
+:root {
+    --width: 1200px;
+    --background-color: #fff;
+    --foreground-color: #fafafa;
+    --text-muted: rgb(128, 132, 149);
+    --border-color: rgb(213, 218, 229);
+
+    --red-color: #ff4b4b;
+    --red-background-color: #ff4b4b1a;
+
+    --green-color: rgb(92, 228, 136);
+    --green-background-color: #5ce4881a;
+}
+
+html {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+}
+
+body {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 1rem;
+    box-sizing: border-box;
+    font-family: "Inter", serif;
+    line-height: 1;
+}
+
+#app {
+    display: contents;
+}
+
+header {
+    width: 100%;
+    max-width: var(--width);
+    margin: 0 auto;
+    position: relative;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+header label {
+    right: 0;
+    color: var(--text-muted);
+    font-weight: normal;
+    position: absolute;
+    user-select: none;
+}
+
+header label[connected="true"]::before {
+    color: var(--green-color);
+    content: "Connected";
+    padding: 4px 8px;
+    background-color: var(--green-background-color);
+}
+
+header label[connected="false"]::before {
+    color: var(--red-color);
+    content: "Disconnected";
+    padding: 4px 8px;
+    background-color: var(--red-background-color);
+    cursor: help;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    max-width: var(--width);
+    margin: 0 auto;
+    box-sizing: border-box;
+    border: 1px solid var(--border-color);
+    background-color: var(--foreground-color);
+    border-radius: 0.5rem;
+}
+
+.chat-display {
+    display: flex;
+    flex: 1 1 auto;
+    padding: 1rem;
+    background-color: var(--foreground-color-color);
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.placeholder {
+    margin: auto;
+    color: var(--text-muted);
+    user-select: none;
+}
+
+.placeholder svg {
+    fill: var(--text-muted);
+}
+
+.chat-input {
+    display: flex;
+    justify-content: space;
+    padding: 1rem;
+    box-sizing: border-box;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--background-color);
+    border-radius: 0 0 0.5rem 0.5rem;
+}
+
+.chat-input label {
+    width: fit-content;
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    fill: var(--text-muted);
+    color: var(--text-muted);
+}
+
+.chat-input label:hover {
+    color: var(--red-color);
+    fill: var(--red-color);
+}
+
+.chat-input button {
+    margin-left: auto;
+}
+
+.chat-input label svg {
+    width: 24px;
+    height: 24px;
+}
+
+.chat-input input {
+    display: none;
+}
+
+/* Buttons */
+.btn {
+    width: fit-content;
+    display: flex;
+    text-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 12px;
+    box-sizing: border-box;
+    border: 1px solid var(--border-color);
+    background-color: var(--background-color);
+    border-radius: 0.375rem;
+    cursor: pointer;
+}
+
+.btn:hover {
+    color: var(--red-color);
+    border-color: var(--red-color);
+}
+
+/* Kind of a responsive design */
+@media (max-width: 1200px) {
+    body {
+        padding: 0;
+    }
+
+    header {
+        margin: 1rem 0;
+    }
+
+    main {
+        border-radius: 0;
+    }
+
+    header label {
+        right: 1rem;
+    }
+}

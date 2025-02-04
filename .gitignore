@@ -1,0 +1,12 @@
+# Backend specific
+.env
+__pycache__
+uploads
+docs
+*.db
+*.json
+
+# Frontend specific
+.vscode
+node_modules
+package-lock.json
