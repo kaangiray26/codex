@@ -15,6 +15,9 @@
             <span class="placeholder" :loaded="store.document_loaded">
                 <github_alt />
                 <i>Upload a file to get started</i>
+                <!-- <Transition name="bounce">
+                    <img src="/speaking.gif" v-if="store.bot_speaking" />
+                </Transition> -->
             </span>
         </div>
         <div class="chat-input" :disabled="!store.connected">
@@ -32,16 +35,18 @@
             />
         </div>
     </main>
-    <Client ref="client" v-if="store.connected" />
+    <Client ref="client" />
 </template>
 
 <script setup>
 import { ref, onMounted, nextTick } from "vue";
 import { store } from "/src/assets/store.js";
+import Client from "./components/Client.vue";
 
 import cloud from "./icons/cloud.vue";
 import github_alt from "./icons/github-alt.vue";
-import Client from "./components/Client.vue";
+
+const client = ref(null);
 
 function browse_files() {
     document.querySelector("#file").click();
@@ -66,5 +71,8 @@ async function upload_file(event) {
     store.document = response.data.document;
     await nextTick();
     store.document_loaded = true;
+
+    // Connect to the server
+    await client.value.connect();
 }
 </script>

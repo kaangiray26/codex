@@ -1,3 +1,4 @@
+from typing import TypedDict
 from datetime import datetime
 from uuid import UUID, uuid4
 from sqlmodel import SQLModel, Field
@@ -12,9 +13,13 @@ class Documents(SQLModel, table=True):
         primary_key=True,
         default_factory=uuid4,
     )
-    name: str = Field(
+    filename: str = Field(
         ...,
         description="The name of the document",
+    )
+    content_type: str = Field(
+        ...,
+        description="The MIME type of the document",
     )
     path: str = Field(
         ...,
@@ -24,3 +29,12 @@ class Documents(SQLModel, table=True):
         default_factory=datetime.now,
         description="The date and time the document was created",
     )
+
+class Environment(TypedDict):
+    OPENAI_API_KEY: str
+    DEEPGRAM_API_KEY: str
+    CARTESIA_API_KEY: str
+    ELEVENLABS_API_KEY: str
+    FISH_API_KEY: str
+    DAILY_API_KEY: str
+    DAILY_ROOM_URL: str

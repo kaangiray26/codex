@@ -1,29 +1,46 @@
-from fastapi import WebSocket
-from pipecat.serializers.protobuf import ProtobufFrameSerializer
-from pipecat.transports.network.fastapi_websocket import (
-    FastAPIWebsocketTransport,
-    FastAPIWebsocketParams
-)
+import time
+import aiohttp
+from lib.helpers import get_env
+from lib.models import Documents
+from lib.prompts import *
 
+# Daily REST API
+from pipecat.transports.services.helpers.daily_rest import (
+    DailyRESTHelper, DailyRoomParams, DailyRoomProperties
+)
 
 class ConnectionManager:
     def __init__(self):
+        self.env = get_env()
         self.connections = set()
 
-    async def connect(self, websocket: WebSocket) -> FastAPIWebsocketTransport:
-        # Accept the incoming connection
-        await websocket.accept()
-        self.connections.add(websocket)
-        
-        # Configure transport
-        return FastAPIWebsocketTransport(
-            websocket=websocket,
-            params=FastAPIWebsocketParams(
-                serializer=ProtobufFrameSerializer(),
-                audio_out_enabled=True,
-                # TODO: Improvements
-                # vad_enabled=True,
-                # vad_analyzer=SileroVADAnalyzer(),
-                # vad_audio_passthrough=True,
+        # Store sessions
+        self.document: Documents
+
+    async def create_room_and_token(self) -> tuple[str, str]:
+        # Create aiohttp session
+        async with aiohttp.ClientSession() as session:
+            # Set Daily REST API helper
+            helper = DailyRESTHelper(
+                daily_api_key=self.env["DAILY_API_KEY"],
+                daily_api_url="https://api.daily.co/v1",
+                aiohttp_session=session,
             )
-        )
+
+            # Create a room
+            room = await helper.create_room(
+                params=DailyRoomParams(
+                    privacy="private",
+                    properties=DailyRoomProperties(
+                        enable_chat=True,
+                        exp=time.time() + 1800
+                    )
+                )
+            )
+
+            # Generate a token for the room
+            token = await helper.get_token(
+                room_url=room.url,
+                owner=True
+            )
+        return room.url, token

@@ -1,5 +1,4 @@
 import { store } from "./store.js";
-
 const ADDRESS = "http://localhost:8000";
 
 class Codex {

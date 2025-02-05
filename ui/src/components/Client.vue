@@ -58,42 +58,119 @@ audio {
 import { ref, onMounted, onBeforeMount } from "vue";
 import { store } from "/src/assets/store.js";
 
-import { RTVIClient } from "@pipecat-ai/client-js";
+import { RTVIClient, RTVIEvent } from "@pipecat-ai/client-js";
 import { DailyTransport } from "@pipecat-ai/daily-transport";
+import AudioMotionAnalyzer from "audiomotion-analyzer";
 
 const audio = ref(null);
+const audioMotion = ref(null);
+
 const dialog = ref(null);
-const rtviClient = ref(null);
+const rtviClient = new RTVIClient({
+    params: {
+        baseUrl: "http://localhost:8000",
+    },
+    transport: new DailyTransport(),
+    enableMic: true,
+    enableCam: false,
+    callbacks: {
+        onConnected: () => {
+            console.log("Connected to the server!");
+        },
+        onDisconnected: () => {
+            console.log("Disconnected from the server!");
+        },
+        onBotConnected: () => {
+            console.log("Bot connected!");
+        },
+        onBotDisconnected: () => {
+            console.log("Bot disconnected!");
+        },
+        // Handle transport state changes
+        onTransportStateChanged: (state) => {
+            console.log(`Transport state changed: ${state}`);
+            if (state === "ready") setupMediaTracks();
+        },
+        // Transcripts
+        onUserTranscript: (data) => console.log("Transcript:", data.text),
+        onBotTranscript: (data) => console.log("Transcript:", data.text),
+    },
+});
 
 async function give_permission() {
     audio.value.play();
     dialog.value.close();
 }
 
-function handleBotAudio(track, participant) {
-    if (participant.local || track.kind !== "audio") return;
+function setupEventListeners() {
+    // Listen for new tracks starting
+    rtviClient.on(RTVIEvent.TrackStarted, (track, participant) => {
+        console.info("Participant:", participant);
+        if (participant?.local) return;
+        setupAudioTrack(track);
+    });
+
+    rtviClient.on(RTVIEvent.BotStartedSpeaking, (track, participant) => {
+        console.info("Bot speaking...");
+        store.bot_speaking = true;
+    });
+
+    rtviClient.on(RTVIEvent.BotStoppedSpeaking, (track, participant) => {
+        console.info("Bot stopped speaking...");
+        store.bot_speaking = false;
+    });
+
+    // Listen for tracks stopping
+    // rtviClient.on(RTVIEvent.TrackStopped, (track, participant) => {
+    //     if (participant?.local) return;
+    //     audio.value.srcObject = null;
+    // });
+}
+
+function setupAudioTrack(track) {
+    // Check if we're already playing this track
+    if (audio.value.srcObject) {
+        const oldTrack = audio.value.srcObject.getAudioTracks()[0];
+        if (oldTrack?.id === track.id) return;
+    }
+    // Create a new MediaStream with the track and set it as the audio source
     audio.value.srcObject = new MediaStream([track]);
-    audio.value.play();
+    // audioMotion.value.connectInput(audio.value.srcObject);
+}
+
+function setupMediaTracks() {
+    console.log("Setting up media tracks...");
+    // Get current tracks from the client
+    const tracks = rtviClient.tracks();
+    console.log("Tracks:", tracks);
+    if (!tracks.bot?.audio) return;
+
+    console.log("Setting up audio track");
+    const track = tracks.bot.audio;
+
+    // Check if we're already playing this track
+    if (audio.value.srcObject) {
+        const oldTrack = audio.value.srcObject.getAudioTracks()[0];
+        if (oldTrack?.id === track.id) return;
+    }
+    // Create a new MediaStream with the track and set it as the audio source
+    audio.value.srcObject = new MediaStream([track]);
 }
 
 async function setup() {
-    console.log("Setting up the client...");
-    const transport = new DailyTransport();
-    const rtviClient = new RTVIClient({
-        transport,
-        params: {
-            baseUrl: "http://localhost:8000/pipecat",
-        },
-        enableMic: true,
-        enableCam: false,
-        callbacks: {
-            onTrackStart: handleBotAudio,
-        },
-    });
+    // Set listeners
+    setupEventListeners();
+
+    // Init media devices
+    await rtviClient.initDevices();
+}
+
+async function connect() {
     await rtviClient.connect();
 }
 
 onMounted(() => {
+    // Set audio source to "clubbed-to-death.mp3"
     audio.value
         .play()
         .then(() => {
@@ -103,5 +180,32 @@ onMounted(() => {
         .catch(() => {
             dialog.value.showModal();
         });
+
+    // Initialize AudioMotion
+    const container = document.querySelector(".placeholder");
+    console.log("Container:", container);
+    audioMotion.value = new AudioMotionAnalyzer(container, {
+        ansiBands: false,
+        showScaleX: false,
+        bgAlpha: 0,
+        overlay: true,
+        mode: 1,
+        frequencyScale: "log",
+        radial: true,
+        roundBars: true,
+        radius: 0,
+        mirror: true,
+        radialInvert: true,
+        showPeaks: false,
+        gradient: "prism",
+        channelLayout: "dual-vertical",
+        smoothing: 0.5,
+        source: audio.value,
+        connectSpeakers: false,
+    });
+});
+
+defineExpose({
+    connect,
 });
 </script>
