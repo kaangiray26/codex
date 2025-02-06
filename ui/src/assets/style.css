@@ -149,7 +149,14 @@ canvas {
     border-radius: 0 0 0.5rem 0.5rem;
 }
 
-.chat-input[disabled="true"] * {
+.input-container {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 1rem;
+}
+
+.input-container[disabled="true"] * {
     fill: rgb(128, 132, 149, 0.35);
     color: rgb(128, 132, 149, 0.35);
     cursor: not-allowed;
@@ -158,17 +165,24 @@ canvas {
 .chat-input label {
     width: fit-content;
     display: flex;
+    flex: 1 1 auto;
     justify-content: left;
     align-items: center;
     gap: 0.5rem;
     cursor: pointer;
     fill: var(--text-muted);
     color: var(--text-muted);
+    overflow: hidden;
 }
 
 .chat-input label:hover {
     color: var(--red-color);
     fill: var(--red-color);
+}
+
+.chat-input label span {
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 .chat-input button {
@@ -178,6 +192,7 @@ canvas {
 .chat-input label svg {
     width: 24px;
     height: 24px;
+    flex-shrink: 0;
 }
 
 .chat-input input {

@@ -78,11 +78,9 @@ class Bot:
             )
         )
 
-        # self.llm = OpenAILLMService(
-        #     model="gpt-4o-mini"
-        # )
-        
-        self.llm = LlamaIndexService()
+        self.llm = LlamaIndexService(
+            document_id=self.document_id
+        )
 
         # Aggregator
         context = OpenAILLMContext(
@@ -131,9 +129,13 @@ class Bot:
 
         @self.transport.event_handler("on_participant_left")
         async def on_participant_left(transport, participant, reason):
+            print("Participant left:", participant, reason)
             if not self.task:
                 return
             await self.task.cancel()
+            
+            # End the pipeline
+            exit()
 
     async def create_pipeline(self):
         if not self.transport:
@@ -158,8 +160,6 @@ class Bot:
             pipeline,
             PipelineParams(
                 allow_interruptions=True,
-                enable_metrics=True,
-                enable_usage_metrics=True,
                 observers=[self.rtvi.observer()],
             )
         )

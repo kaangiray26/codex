@@ -1,12 +1,18 @@
 import os
-import time
 from typing import Optional
+from llama_index.core.response_synthesizers import ResponseMode
 from markitdown import MarkItDown
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.indices.base import BaseIndex
+from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core import (
     VectorStoreIndex, Document,
-    StorageContext, load_index_from_storage
+    StorageContext, load_index_from_storage,
+    get_response_synthesizer
+)
+from llama_index.core.vector_stores import (
+    MetadataFilter,
+    MetadataFilters
 )
 
 class LlamaIndex:
@@ -34,6 +40,13 @@ class LlamaIndex:
             index_id="vector_index"
         )
 
+    def create_filter_by_id(self, document_id):
+        return MetadataFilters(
+            filters=[
+                MetadataFilter(key="id_", value=document_id)
+            ]
+        )
+
     def create_index(self):
         print("Creating index...")
         self.index = VectorStoreIndex.from_documents([])
@@ -44,10 +57,7 @@ class LlamaIndex:
         # Parse the document
         path = os.path.join("uploads", document_id)
         documents = self.parse_with_markitdown(document_id, path)
-
-        # Parse nodes
-        nodes = self.parser.get_nodes_from_documents(documents)
-        self.index = VectorStoreIndex(nodes)
+        self.index = VectorStoreIndex.from_documents(documents)
 
     def add_document_to_index(self, document_id):
         # Check if we have an index
@@ -56,14 +66,16 @@ class LlamaIndex:
 
         path = os.path.join("uploads", document_id)
         documents = self.parse_with_markitdown(document_id, path)
+        for doc in documents:
+            self.index.insert(doc)
 
-        # Parse nodes
-        nodes = self.parser.get_nodes_from_documents(documents)
-        self.index.insert_nodes(nodes)
+        # Refresh the index
+        self.index.refresh(documents)
 
         # Save index to disk
         self.index.set_index_id("vector_index")
         self.index.storage_context.persist("./storage")
+        print("Document added to index!")
 
     def parse_with_markitdown(self, document_id, file_path) -> list[Document]:
         # Parse the pdf
@@ -72,23 +84,38 @@ class LlamaIndex:
         # Create documents
         return [
             Document(
-                doc_id=document_id,
-                text=result.text_content
+                text=result.text_content,
+                id_=document_id,
+                metadata={"id_": document_id}
             )
         ]
 
     def answer(self, query, document_id):
-        print(f"Answering question: {query}")
         if not self.index:
             raise Exception("Index not found!")
 
+        # Create filters
+        filters = self.create_filter_by_id(document_id)
+
+        # Create retriever
+        retriever = self.index.as_retriever(
+            filters=filters
+        )
+
+        # Configure response synthesizer
+        response_synthesizer = get_response_synthesizer(
+            response_mode=ResponseMode.REFINE
+        )
+
+        # Get query engine
+        query_engine = RetrieverQueryEngine(
+            retriever=retriever,
+            response_synthesizer=response_synthesizer
+        )
+
         # Query the index
-        start = time.time()
-        query_engine = self.index.as_query_engine()
-        end = time.time()
         response = query_engine.query(query)
-        print(f"Query took: {end - start :.2f} seconds")
-        print(response)
+        print(f"> {response}")
 
 
 if __name__ == "__main__":
@@ -97,9 +124,13 @@ if __name__ == "__main__":
     set_env()
 
     index = LlamaIndex()
-
-    # Ask a question
-    index.answer(
-        query = "would a daughter of a friend revive a correlative idea? If yes, please explain why.",
-        document_id = "12984e0a4e8de38774feb40197952242c4f240cbb93fac69ab7d8aa77e7e37be"
-    )
+    print("Welcome to Codex!")
+    
+    document_id = "dd0731878cde1af78e1edf5f1013fd3499a3655b93c0823e30f6f06f08f115a6"
+    while True:
+        query = input(": ")
+        # Ask a question
+        index.answer(
+            query = query,
+            document_id = document_id
+        )
