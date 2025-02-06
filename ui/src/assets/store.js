@@ -8,8 +8,5 @@ export const store = reactive({
     bot_speaking: false,
     transcripts: [],
     show_citations: false,
-    extra: {
-        citations: [],
-        sources: []
-    }
+    sources: []
 });

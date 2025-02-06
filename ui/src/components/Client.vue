@@ -90,12 +90,12 @@ const rtviClient = new RTVIClient({
         },
         onGenericMessage: (data) => {
             console.log("Generic message:", data);
-            if (!data.hasOwnProperty("extra")) return;
-            store.extra = data.extra;
+            if (!data.hasOwnProperty("sources")) return;
+            store.sources = data.sources;
+            store.show_citations = true;
         },
         // Handle transport state changes
         onTransportStateChanged: (state) => {
-            console.log(`Transport state changed: ${state}`);
             if (state === "ready") setupMediaTracks();
         },
     },
@@ -112,13 +112,6 @@ function setupEventListeners() {
         console.info("Participant:", participant);
         if (participant?.local) return;
         setupAudioTrack(track);
-    });
-
-    // Listen for tracks stopping
-    rtviClient.on(RTVIEvent.TrackStopped, (track, participant) => {
-        console.info("Track stopped:", participant);
-        // if (participant?.local) return;
-        // audio.value.srcObject = null;
     });
 
     // Transcripts

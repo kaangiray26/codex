@@ -3,7 +3,7 @@
         <div class="citations-container" v-if="store.show_citations">
             <b>Citations</b>
             <ul>
-                <li v-for="source in store.extra.sources">
+                <li v-for="source in store.sources">
                     {{ source }}
                 </li>
             </ul>
@@ -16,7 +16,7 @@
     position: absolute;
     top: 1rem;
     right: 1rem;
-    gap: 0.5rem;
+    gap: 1rem;
     display: flex;
     flex-direction: column;
     background-color: var(--background-color);
@@ -34,6 +34,8 @@
     margin: 0;
     padding: 0;
     list-style-type: none;
+    display: grid;
+    gap: 0.5rem;
 }
 
 @media (max-width: 1200px) {
