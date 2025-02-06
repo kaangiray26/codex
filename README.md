@@ -41,6 +41,19 @@ This project is built with **pipecat** and **LlamaIndex** mainly. Other componen
 - [OpenAI](https://openai.com/) for LLM
 - [ElevenLabs](https://elevenlabs.io/) for TTS
 
+The root directory of the project contains the following files:
+```
+├── dist                # Built web application
+├── images              # Screenshots
+├── lib                 # Python libraries
+├── ui                  # Source code for the web application
+├── .gitignore          # Git ignore file
+├── LICENSE             # MIT License
+├── main.py             # FastAPI main file
+├── README.md           # Project README
+└── requirements.txt    # Python dependencies
+```
+
 ## Resources:
 
 - [pipecat](https://github.com/pipecat-ai/pipecat)
