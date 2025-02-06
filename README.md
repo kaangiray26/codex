@@ -20,13 +20,14 @@ pip install -r requirements.txt
 ```
 
 ## Usage
+
 Once the setup is complete, you can run the application inside the virtual environment:
 
 ```bash
 fastapi run
 ```
 
-This will start the FASTAPI server on `http://localhost:8000`. 
+This will start the web server and the web application will be available at [localhost:8000/app](http://localhost:8000/app). Open the link in your browser to access the application.
 
 ## Resources:
 
