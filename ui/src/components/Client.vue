@@ -1,5 +1,5 @@
 <template>
-    <audio ref="audio" src="/silence.mp3" playsinline autoplay></audio>
+    <audio ref="audio" src="silence.mp3" playsinline autoplay></audio>
     <dialog ref="dialog" class="permission" @cancel.prevent>
         <div class="dialog-header">
             <b>Codex</b>
@@ -182,8 +182,6 @@ async function connect() {
 }
 
 onMounted(() => {
-    // Little easter egg
-    // audio.value.src = "/clubbed-to-death.mp3";
     audio.value
         .play()
         .then(() => {

@@ -117,7 +117,6 @@ class LlamaIndexService(LLMService):
                 citations.append(int(text))
                 continue
 
-            print("Pushing response:", response)
             await self.push_frame(LLMTextFrame(response))
             getting_citation = False
 
