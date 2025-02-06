@@ -88,6 +88,11 @@ const rtviClient = new RTVIClient({
         onBotDisconnected: () => {
             console.log("Bot disconnected!");
         },
+        onGenericMessage: (data) => {
+            console.log("Generic message:", data);
+            if (!data.hasOwnProperty("extra")) return;
+            store.extra = data.extra;
+        },
         // Handle transport state changes
         onTransportStateChanged: (state) => {
             console.log(`Transport state changed: ${state}`);
@@ -124,6 +129,10 @@ function setupEventListeners() {
     rtviClient.on(RTVIEvent.BotTranscript, (data) => {
         console.log("Bot:", data.text);
         emit("transcript", data.text);
+    });
+
+    rtviClient.on(RTVIEvent.BotLlmText, (data) => {
+        console.log("Bot LLM:", data.text);
     });
 
     rtviClient.on(RTVIEvent.BotStartedSpeaking, (track, participant) => {

@@ -23,7 +23,7 @@
                 <book />
                 <span>{{ store.document.filename }}</span>
             </label>
-            <button class="btn" @click="reload">Reload</button>
+            <button class="btn" @click="toggle_citations">Citations</button>
         </div>
     </div>
 </template>
@@ -63,7 +63,7 @@ async function upload_file(event) {
     emit("connect");
 }
 
-function reload(){
-    window.location.reload();
+function toggle_citations() {
+    store.show_citations = !store.show_citations;
 }
 </script>

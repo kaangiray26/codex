@@ -17,9 +17,7 @@
                 <i>Upload a file to get started</i>
             </span>
             <Transcripts ref="transcripts" />
-            <!-- <div class="transcript-container">
-                <p>{{ store.transcripts.length ? store.transcripts[0].text : "" }}</p>
-            </div> -->
+            <Citations ref="citations" />
         </div>
         <ChatToolbar ref="chat_toolbar" @connect="handle_connect" />
     </main>
@@ -36,6 +34,7 @@ import { store } from "/src/assets/store.js";
 import Client from "./components/Client.vue";
 import ChatToolbar from "./components/ChatToolbar.vue";
 import Transcripts from "./components/Transcripts.vue";
+import Citations from "./components/Citations.vue";
 
 import github_alt from "./icons/github-alt.vue";
 

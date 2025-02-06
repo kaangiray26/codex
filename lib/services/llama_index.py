@@ -1,7 +1,10 @@
 import os
+from typing import Literal, Dict, Any
+from pydantic import BaseModel
 
 # Llama Index
 from llama_index.core.query_engine import (
+    CitationQueryEngine,
     RetrieverQueryEngine
 )
 from llama_index.core import (
@@ -24,23 +27,30 @@ from pipecat.processors.frame_processor import (
     FrameDirection
 )
 from pipecat.frames.frames import (
-    StartFrame,
     Frame,
     LLMFullResponseEndFrame,
     LLMFullResponseStartFrame,
     LLMMessagesFrame,
-    LLMTextFrame,
-    TextFrame,
-    TTSSpeakFrame
+    LLMTextFrame
+)
+from pipecat.processors.frameworks.rtvi import (
+    RTVITextMessageData, TransportMessageUrgentFrame,
+    RTVIMessageLiteral, RTVI_MESSAGE_LABEL
 )
 from llama_index.core import Settings
 from llama_index.llms.openai import OpenAI
+from lib.engines.citated_query_engine import CitatedQueryEngine
 
 # Set the llm model
 Settings.llm = OpenAI(
     model="gpt-4",
     temperature=0.5,
 )
+
+class RTVICitationsMessage(BaseModel):
+    label: RTVIMessageLiteral = RTVI_MESSAGE_LABEL
+    type: Literal["citations"] = "citations"
+    data: Dict[str, Any]
 
 class LlamaIndexService(LLMService):
     def __init__(
@@ -62,13 +72,11 @@ class LlamaIndexService(LLMService):
         retriever = self.index.as_retriever(
             filters=filters
         )
-        response_synthesizer = get_response_synthesizer(
-            streaming=True,
-            response_mode=ResponseMode.REFINE
-        )
-        self.query_engine = RetrieverQueryEngine(
+        self.query_engine = CitatedQueryEngine.from_args(
+            index=self.index,
+            similarity_top_k=3,
             retriever=retriever,
-            response_synthesizer=response_synthesizer
+            citation_chunk_size=128
         )
         print("Query engine created!")
 
@@ -89,9 +97,23 @@ class LlamaIndexService(LLMService):
         print("Processing context...")
         message = context.messages[-1].get("content")
 
-        stream_response = await self.query_engine.aquery(message)
-        async for token in stream_response.response_gen:
-            await self.push_frame(LLMTextFrame(token))
+        # Query the index
+        response = await self.query_engine.aquery(message)
+        await self.push_frame(LLMTextFrame(response.answer))
+
+        # Return the citations
+        model = RTVICitationsMessage(
+            data={
+                "extra":{
+                    "citations": response.citations,
+                    "sources": [response.source_nodes[i-1].node.text for i in response.citations]
+                }
+            }
+        )
+        await self.push_frame(
+            TransportMessageUrgentFrame(message=model.model_dump()),
+            FrameDirection.DOWNSTREAM
+        )
 
     async def process_frame(self, frame: Frame, direction: FrameDirection):
         await super().process_frame(frame, direction)

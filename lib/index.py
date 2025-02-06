@@ -1,17 +1,16 @@
 import os
+import time
 from typing import Optional
 from markitdown import MarkItDown
+from lib.engines.citated_query_engine import CitatedAnswer, CitatedQueryEngine
 
-from llama_index.core import PromptTemplate
 from llama_index.core.indices.base import BaseIndex
 from llama_index.core.node_parser import SentenceSplitter
-from llama_index.core.response_synthesizers import ResponseMode
-from llama_index.core.query_engine import RetrieverQueryEngine
+from llama_index.core.query_engine import BaseQueryEngine, CitationQueryEngine
 from llama_index.core.chat_engine import CondenseQuestionChatEngine
 from llama_index.core import (
     VectorStoreIndex, Document,
     StorageContext, load_index_from_storage,
-    get_response_synthesizer
 )
 from llama_index.core.vector_stores import (
     MetadataFilter,
@@ -30,6 +29,7 @@ class LlamaIndex:
 
         # Create index
         self.index: Optional[BaseIndex] = None
+        self.query_engine: Optional[BaseQueryEngine] = None
         self.chat_engine: Optional[CondenseQuestionChatEngine] = None
 
         # Create storage context
@@ -96,12 +96,12 @@ class LlamaIndex:
             )
         ]
 
-    def answer(self, query, document_id):
+    def answer_with_citations(self, query, document_id):
         if not self.index:
             raise Exception("Index not found!")
 
-        # Create chat engine if not exists
-        if not self.chat_engine:
+        # Create query engine if not exists
+        if not self.query_engine:
             # Create filters
             filters = self.create_filter_by_id(document_id)
 
@@ -109,28 +109,28 @@ class LlamaIndex:
             retriever = self.index.as_retriever(
                 filters=filters
             )
-
-            # Configure response synthesizer
-            response_synthesizer = get_response_synthesizer(
-                response_mode=ResponseMode.REFINE
-            )
-
+            
             # Get query engine
-            query_engine = RetrieverQueryEngine(
+            self.query_engine = CitatedQueryEngine.from_args(
+                index=self.index,
+                similarity_top_k=3,
                 retriever=retriever,
-                response_synthesizer=response_synthesizer
-            )
-
-            # Create chat engine
-            self.chat_engine = CondenseQuestionChatEngine.from_defaults(
-                query_engine=query_engine,
-                chat_history=[]
+                citation_chunk_size=128,
             )
 
         # Query the index
-        response = self.chat_engine.chat(query)
-        print(f"> {response}")
-
+        print("Querying the index...")
+        start = time.time()
+        response = self.query_engine.query(query)
+        end = time.time()
+        print(f"Query took {end - start :.2f} seconds")
+        print(response)
+        
+        # Get the citations
+        print("Citations:")
+        for citation in response.citations:
+            print(f"[{citation}]")
+            print(response.source_nodes[citation-1].node.get_content())
 
 if __name__ == "__main__":
     from lib.helpers import set_env
@@ -148,9 +148,13 @@ if __name__ == "__main__":
 
     document_id = "dd0731878cde1af78e1edf5f1013fd3499a3655b93c0823e30f6f06f08f115a6"
     while True:
-        query = input(": ")
+        # query = input(": ")
+        query = "Who was the founder of this university?"
+        
         # Ask a question
-        index.answer(
+        index.answer_with_citations(
             query = query,
             document_id = document_id
         )
+        
+        break

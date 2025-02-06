@@ -7,4 +7,9 @@ export const store = reactive({
     document: null,
     bot_speaking: false,
     transcripts: [],
+    show_citations: false,
+    extra: {
+        citations: [],
+        sources: []
+    }
 });
