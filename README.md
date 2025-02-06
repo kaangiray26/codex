@@ -4,6 +4,9 @@ Question Answering on PDF Documents
 
 ![](images/app.png)
 
+## Demo
+Watch the demo video [here](https://drive.google.com/file/d/1hDPElT5jYOd0kvpP5ePd_bDm19Kr3GrA/view?usp=sharing).
+
 ## About
 
 This is a local web application that allows users to upload PDF documents and ask questions about the document to a voice assistant. The voice assistant will then answer the question based on the contents of the document.
