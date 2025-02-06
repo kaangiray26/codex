@@ -1,4 +1,5 @@
 import os
+import re
 from pydantic import BaseModel
 from typing import Literal, Dict, Any
 
@@ -94,31 +95,17 @@ class LlamaIndexService(LLMService):
 
         message = context.messages[-1].get("content")
 
-        citations = []
-        getting_citation = False
-
         # Query the engine
+        response_txt = ""
         streaming_response = await self.query_engine.aquery(message)
         async for response in streaming_response.response_gen:
-            text = response.strip()
-            if not len(text):
-                continue
-
-            if text.startswith("["):
-                getting_citation = True
-                continue
-
-            if text.startswith("]"):
-                getting_citation = False
-                await self.push_frame(LLMTextFrame(". "))
-                continue
-
-            if getting_citation:
-                citations.append(int(text))
-                continue
-
             await self.push_frame(LLMTextFrame(response))
-            getting_citation = False
+            response_txt += response
+
+        # Get the citations
+        citations = list(map(int, re.findall(r"\[(\d+)\]", response_txt)))
+        if not citations:
+            return
 
         # Return the citations
         model = RTVICitationsMessage(

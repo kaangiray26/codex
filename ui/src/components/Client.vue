@@ -62,7 +62,7 @@ import { RTVIClient, RTVIEvent } from "@pipecat-ai/client-js";
 import { DailyTransport } from "@pipecat-ai/daily-transport";
 import AudioMotionAnalyzer from "audiomotion-analyzer";
 
-const emit = defineEmits(["transcript", "started"]);
+const emit = defineEmits(["transcript", "started", "clear_transcripts"]);
 
 const audio = ref(null);
 const audioMotion = ref(null);

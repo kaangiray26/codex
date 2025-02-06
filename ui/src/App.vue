@@ -47,6 +47,7 @@ async function handle_connect() {
 }
 
 function handle_transcript(text) {
+    console.log("Adding:", text);
     transcripts.value.add_transcript(text);
 }
 

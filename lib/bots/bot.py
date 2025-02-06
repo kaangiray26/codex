@@ -1,6 +1,4 @@
 from typing import Optional, List
-
-from pipecat.processors.aggregators.openai_llm_context import OpenAILLMContext
 from lib.helpers import get_env
 from lib.models import Environment
 
@@ -20,12 +18,14 @@ from pipecat.services.deepgram import DeepgramSTTService
 from pipecat.services.elevenlabs import ElevenLabsTTSService
 
 # Processor
+from lib.text_filters import CitationFilter
+from pipecat.processors.aggregators.openai_llm_context import OpenAILLMContext
 from pipecat.processors.transcript_processor import TranscriptProcessor
 from pipecat.processors.frameworks.rtvi import (
     RTVIConfig, RTVIProcessor, RTVISpeakingProcessor,
-    RTVIUserTranscriptionProcessor, RTVIBotTranscriptionProcessor
+    RTVIUserTranscriptionProcessor, RTVIBotTranscriptionProcessor,
+    RTVIBotTTSProcessor
 )
-# from lib.processors.llama_index import LLamaIndexProcessor
 from lib.services.llama_index import LlamaIndexService
 
 # Filters
@@ -63,6 +63,13 @@ class Bot:
         self.task: Optional[PipelineTask] = None
         self.runner: Optional[PipelineRunner] = None
 
+        # Text filter
+        text_filter = CitationFilter(
+            params=CitationFilter.InputParams(
+                enable_text_filter=True
+            )
+        )
+
         # Configure services
         self.stt = DeepgramSTTService(
             api_key=self.env["DEEPGRAM_API_KEY"]
@@ -72,6 +79,7 @@ class Bot:
             api_key=self.env["ELEVENLABS_API_KEY"],
             voice_id="aEO01A4wXwd1O8GPgGlF",
             stability=0.5,
+            text_filter=text_filter,
             params=ElevenLabsTTSService.InputParams(
                 language=Language.EN_US
             )
@@ -101,6 +109,7 @@ class Bot:
         self.rtvi_speaking = RTVISpeakingProcessor()
         self.rtvi_user_transcription = RTVIUserTranscriptionProcessor()
         self.rtvi_bot_transcription = RTVIBotTranscriptionProcessor()
+        self.rtvi_bot_tts = RTVIBotTTSProcessor()
 
     # Configure transport
     async def create_transport(self):
@@ -132,7 +141,7 @@ class Bot:
             if not self.task:
                 return
             await self.task.cancel()
-            
+
             # End the pipeline
             exit()
 
