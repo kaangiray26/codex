@@ -20,22 +20,6 @@
                 <p>{{ store.transcripts[0] }}</p>
             </div>
         </div>
-        <!-- <div class="chat-input" :disabled="!store.connected">
-            <div class="input-container">
-                <label for="file">
-                    <cloud />
-                    <span>Upload</span>
-                </label>
-                <button class="btn" @click="browse_files">Browse files</button>
-                <input
-                    type="file"
-                    id="file"
-                    accept="application/pdf"
-                    @change="upload_file"
-                    :disabled="!store.connected"
-                />
-            </div>
-        </div> -->
         <ChatToolbar ref="chat_toolbar" @connect="handle_connect" />
     </main>
     <Client ref="client" @transcript="handle_transcript" />

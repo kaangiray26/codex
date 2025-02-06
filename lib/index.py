@@ -1,10 +1,13 @@
 import os
 from typing import Optional
-from llama_index.core.response_synthesizers import ResponseMode
 from markitdown import MarkItDown
-from llama_index.core.node_parser import SentenceSplitter
+
+from llama_index.core import PromptTemplate
 from llama_index.core.indices.base import BaseIndex
+from llama_index.core.node_parser import SentenceSplitter
+from llama_index.core.response_synthesizers import ResponseMode
 from llama_index.core.query_engine import RetrieverQueryEngine
+from llama_index.core.chat_engine import CondenseQuestionChatEngine
 from llama_index.core import (
     VectorStoreIndex, Document,
     StorageContext, load_index_from_storage,
@@ -14,6 +17,8 @@ from llama_index.core.vector_stores import (
     MetadataFilter,
     MetadataFilters
 )
+from llama_index.core import Settings
+from llama_index.llms.openai import OpenAI
 
 class LlamaIndex:
     def __init__(self):
@@ -25,6 +30,7 @@ class LlamaIndex:
 
         # Create index
         self.index: Optional[BaseIndex] = None
+        self.chat_engine: Optional[CondenseQuestionChatEngine] = None
 
         # Create storage context
         self.storage_context = None
@@ -94,27 +100,35 @@ class LlamaIndex:
         if not self.index:
             raise Exception("Index not found!")
 
-        # Create filters
-        filters = self.create_filter_by_id(document_id)
+        # Create chat engine if not exists
+        if not self.chat_engine:
+            # Create filters
+            filters = self.create_filter_by_id(document_id)
 
-        # Create retriever
-        retriever = self.index.as_retriever(
-            filters=filters
-        )
+            # Create retriever
+            retriever = self.index.as_retriever(
+                filters=filters
+            )
 
-        # Configure response synthesizer
-        response_synthesizer = get_response_synthesizer(
-            response_mode=ResponseMode.REFINE
-        )
+            # Configure response synthesizer
+            response_synthesizer = get_response_synthesizer(
+                response_mode=ResponseMode.REFINE
+            )
 
-        # Get query engine
-        query_engine = RetrieverQueryEngine(
-            retriever=retriever,
-            response_synthesizer=response_synthesizer
-        )
+            # Get query engine
+            query_engine = RetrieverQueryEngine(
+                retriever=retriever,
+                response_synthesizer=response_synthesizer
+            )
+
+            # Create chat engine
+            self.chat_engine = CondenseQuestionChatEngine.from_defaults(
+                query_engine=query_engine,
+                chat_history=[]
+            )
 
         # Query the index
-        response = query_engine.query(query)
+        response = self.chat_engine.chat(query)
         print(f"> {response}")
 
 
@@ -123,9 +137,15 @@ if __name__ == "__main__":
     # Load the config
     set_env()
 
+    # Set the llm
+    Settings.llm = OpenAI(
+        model="gpt-4",
+        temperature=0.1,
+    )
+
     index = LlamaIndex()
     print("Welcome to Codex!")
-    
+
     document_id = "dd0731878cde1af78e1edf5f1013fd3499a3655b93c0823e30f6f06f08f115a6"
     while True:
         query = input(": ")

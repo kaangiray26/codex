@@ -29,8 +29,17 @@ from pipecat.frames.frames import (
     LLMFullResponseEndFrame,
     LLMFullResponseStartFrame,
     LLMMessagesFrame,
+    LLMTextFrame,
     TextFrame,
     TTSSpeakFrame
+)
+from llama_index.core import Settings
+from llama_index.llms.openai import OpenAI
+
+# Set the llm model
+Settings.llm = OpenAI(
+    model="gpt-4",
+    temperature=0.5,
 )
 
 class LlamaIndexService(LLMService):
@@ -79,9 +88,10 @@ class LlamaIndexService(LLMService):
 
         print("Processing context...")
         message = context.messages[-1].get("content")
+
         stream_response = await self.query_engine.aquery(message)
         async for token in stream_response.response_gen:
-            await self.push_frame(TextFrame(token))
+            await self.push_frame(LLMTextFrame(token))
 
     async def process_frame(self, frame: Frame, direction: FrameDirection):
         await super().process_frame(frame, direction)

@@ -115,6 +115,7 @@ function setupEventListeners() {
     });
 
     rtviClient.on(RTVIEvent.BotTranscript, (data) => {
+        console.log("Bot:", data.text);
         emit("transcript", data.text);
     });
 
@@ -143,7 +144,6 @@ function setupAudioTrack(track) {
     }
     // Create a new MediaStream with the track and set it as the audio source
     audio.value.srcObject = new MediaStream([track]);
-    // audioMotion.value.connectInput(audio.value.srcObject);
 }
 
 function setupMediaTracks() {
