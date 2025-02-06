@@ -140,6 +140,8 @@ async def rtvi_connect(
     # Return the room URL and token
     return {"room_url": room_url, "token": token}
 
+# For testing purposes
+# Use this part as a CLI tool
 if __name__ == "__main__":
     import shutil
     import argparse

@@ -36,7 +36,6 @@ from pipecat.processors.filters.stt_mute_filter import (
 )
 
 # All frames
-from pipecat.processors.aggregators.openai_llm_context import OpenAILLMContextFrame
 from pipecat.frames.frames import (
     TranscriptionMessage, TranscriptionUpdateFrame
 )

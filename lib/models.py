@@ -29,11 +29,8 @@ class Documents(SQLModel, table=True):
     )
 
 class Environment(TypedDict):
-    LLAMA_CLOUD_API_KEY: str
     OPENAI_API_KEY: str
     DEEPGRAM_API_KEY: str
-    CARTESIA_API_KEY: str
     ELEVENLABS_API_KEY: str
-    FISH_API_KEY: str
     DAILY_API_KEY: str
     DAILY_ROOM_URL: str
