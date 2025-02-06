@@ -90,11 +90,10 @@ main {
 
 canvas {
     opacity: 0.5;
-    aspect-ratio: 1;
+    width: 100%;
     position: absolute;
     top: 0;
     left: 0;
-    scale: 2;
 }
 
 .chat-display {
@@ -103,6 +102,7 @@ canvas {
     padding: 1rem;
     background-color: var(--foreground-color);
     border-radius: 0.5rem 0.5rem 0 0;
+    position: relative;
 }
 
 .placeholder {
@@ -121,20 +121,22 @@ canvas {
     fill: var(--text-muted);
 }
 
-.placeholder img {
-    display: flex;
-    position: absolute;
-    width: 216px;
-    height: auto;
-    bottom: -8rem;
-}
-
 .placeholder[loaded="true"] i {
     display: none;
 }
 
 .placeholder[loaded="true"] svg {
     fill: black;
+}
+
+.transcript-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    color: var(--text-muted);
 }
 
 .chat-input {

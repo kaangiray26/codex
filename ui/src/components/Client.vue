@@ -62,6 +62,8 @@ import { RTVIClient, RTVIEvent } from "@pipecat-ai/client-js";
 import { DailyTransport } from "@pipecat-ai/daily-transport";
 import AudioMotionAnalyzer from "audiomotion-analyzer";
 
+const emit = defineEmits(["transcript"]);
+
 const audio = ref(null);
 const audioMotion = ref(null);
 
@@ -91,9 +93,6 @@ const rtviClient = new RTVIClient({
             console.log(`Transport state changed: ${state}`);
             if (state === "ready") setupMediaTracks();
         },
-        // Transcripts
-        onUserTranscript: (data) => console.log("Transcript:", data.text),
-        onBotTranscript: (data) => console.log("Transcript:", data.text),
     },
 });
 
@@ -108,6 +107,15 @@ function setupEventListeners() {
         console.info("Participant:", participant);
         if (participant?.local) return;
         setupAudioTrack(track);
+    });
+
+    // Transcripts
+    rtviClient.on(RTVIEvent.UserTranscript, (data) => {
+        console.log("User:", data.text);
+    });
+
+    rtviClient.on(RTVIEvent.BotTranscript, (data) => {
+        emit("transcript", data.text);
     });
 
     rtviClient.on(RTVIEvent.BotStartedSpeaking, (track, participant) => {
@@ -171,6 +179,7 @@ async function connect() {
 
 onMounted(() => {
     // Set audio source to "clubbed-to-death.mp3"
+    // audio.value.src = "/clubbed-to-death.mp3";
     audio.value
         .play()
         .then(() => {
@@ -182,7 +191,7 @@ onMounted(() => {
         });
 
     // Initialize AudioMotion
-    const container = document.querySelector(".placeholder");
+    const container = document.querySelector(".chat-display");
     console.log("Container:", container);
     audioMotion.value = new AudioMotionAnalyzer(container, {
         ansiBands: false,

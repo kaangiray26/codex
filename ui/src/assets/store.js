@@ -6,4 +6,5 @@ export const store = reactive({
     document_loaded: false,
     document: null,
     bot_speaking: false,
+    transcripts: [],
 });

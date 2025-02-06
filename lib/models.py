@@ -1,6 +1,5 @@
 from typing import TypedDict
 from datetime import datetime
-from uuid import UUID, uuid4
 from sqlmodel import SQLModel, Field
 
 # SQLModel configuration
@@ -9,9 +8,8 @@ sqlite_url = f"sqlite:///{sqlite_file_name}"
 connect_args = {"check_same_thread": False}
 
 class Documents(SQLModel, table=True):
-    id: UUID = Field(
+    id: str = Field(
         primary_key=True,
-        default_factory=uuid4,
     )
     filename: str = Field(
         ...,
@@ -31,6 +29,7 @@ class Documents(SQLModel, table=True):
     )
 
 class Environment(TypedDict):
+    LLAMA_CLOUD_API_KEY: str
     OPENAI_API_KEY: str
     DEEPGRAM_API_KEY: str
     CARTESIA_API_KEY: str

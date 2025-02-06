@@ -12,10 +12,18 @@ from pipecat.transports.services.helpers.daily_rest import (
 class ConnectionManager:
     def __init__(self):
         self.env = get_env()
-        self.connections = set()
+        self.processes = dict()
 
         # Store sessions
         self.document: Documents
+
+    def terminate_processes(self):
+        for process in self.processes.values():
+            process.terminate()
+            process.wait()
+
+    def add_process(self, pid, proc):
+        self.processes[pid] = proc
 
     async def create_room_and_token(self) -> tuple[str, str]:
         # Create aiohttp session

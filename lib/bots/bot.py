@@ -13,17 +13,20 @@ from pipecat.pipeline.task import PipelineTask, PipelineParams
 from pipecat.transports.services.daily import DailyTransport, DailyParams
 
 # Services
-from deepgram import LiveOptions
-from pipecat.audio.vad.silero import SileroVADAnalyzer
-from pipecat.services.cartesia import CartesiaTTSService
-from pipecat.services.deepgram import DeepgramSTTService
-from pipecat.services.openai import OpenAILLMService, OpenAITTSService
-from pipecat.services.elevenlabs import ElevenLabsTTSService
 from pipecat.transcriptions.language import Language
+from pipecat.audio.vad.silero import SileroVADAnalyzer
+from pipecat.services.openai import OpenAILLMService
+from pipecat.services.deepgram import DeepgramSTTService
+from pipecat.services.elevenlabs import ElevenLabsTTSService
 
 # Processor
 from pipecat.processors.transcript_processor import TranscriptProcessor
-from pipecat.processors.frameworks.rtvi import RTVIConfig, RTVIProcessor, RTVISpeakingProcessor
+from pipecat.processors.frameworks.rtvi import (
+    RTVIConfig, RTVIProcessor, RTVISpeakingProcessor,
+    RTVIUserTranscriptionProcessor, RTVIBotTranscriptionProcessor
+)
+# from lib.processors.llama_index import LLamaIndexProcessor
+from lib.services.llama_index import LlamaIndexService
 
 # Filters
 from pipecat.processors.filters.stt_mute_filter import (
@@ -33,10 +36,8 @@ from pipecat.processors.filters.stt_mute_filter import (
 )
 
 # All frames
+from pipecat.processors.aggregators.openai_llm_context import OpenAILLMContextFrame
 from pipecat.frames.frames import (
-    EndFrame,
-    TTSSpeakFrame, TTSStartedFrame, TTSStoppedFrame,
-    BotStartedSpeakingFrame, BotStoppedSpeakingFrame,
     TranscriptionMessage, TranscriptionUpdateFrame
 )
 
@@ -53,9 +54,10 @@ class TranscriptHandler:
         print(f"Transcript: {message.role}: {message.content}")
 
 class Bot:
-    def __init__(self, url, token):
-        self.room_url = url
+    def __init__(self, url, token, document_id):
+        self.url = url
         self.token = token
+        self.document_id = document_id
         self.env: Environment = get_env()
 
         # Variables
@@ -67,22 +69,20 @@ class Bot:
             api_key=self.env["DEEPGRAM_API_KEY"]
         )
 
-        # self.tts = CartesiaTTSService(
-        #     api_key=self.env["CARTESIA_API_KEY"],
-        #     voice_id="03496517-369a-4db1-8236-3d3ae459ddf7"
-        # )
-
         self.tts = ElevenLabsTTSService(
             api_key=self.env["ELEVENLABS_API_KEY"],
             voice_id="aEO01A4wXwd1O8GPgGlF",
+            stability=0.5,
             params=ElevenLabsTTSService.InputParams(
                 language=Language.EN_US
             )
         )
 
-        self.llm = OpenAILLMService(
-            model="gpt-4o-mini"
-        )
+        # self.llm = OpenAILLMService(
+        #     model="gpt-4o-mini"
+        # )
+        
+        self.llm = LlamaIndexService()
 
         # Aggregator
         context = OpenAILLMContext(
@@ -93,13 +93,7 @@ class Bot:
         )
         self.context_aggregator = OpenAILLMService.create_context_aggregator(context)
 
-        # Transcript handler
-        # self.transcript = TranscriptProcessor()
-        # @self.transcript.event_handler("on_transcript_update")
-        # async def handle_update(processor, frame):
-        #     for msg in frame.messages:
-        #             print(f"{msg.role}: {msg.content}")
-
+        # STT mute filter
         self.stt_mute_filter = STTMuteFilter(
             stt_service=self.stt,
             config=STTMuteConfig(strategies={STTMuteStrategy.ALWAYS})
@@ -107,12 +101,14 @@ class Bot:
 
         # Initialize RTVI with default config
         self.rtvi = RTVIProcessor(config=RTVIConfig(config=[]))
-        self.speaking = RTVISpeakingProcessor()
+        self.rtvi_speaking = RTVISpeakingProcessor()
+        self.rtvi_user_transcription = RTVIUserTranscriptionProcessor()
+        self.rtvi_bot_transcription = RTVIBotTranscriptionProcessor()
 
+    # Configure transport
     async def create_transport(self):
-        # Configure transport
         self.transport = DailyTransport(
-            room_url=self.room_url,
+            room_url=self.url,
             token=self.token,
             bot_name="Codex",
             params=DailyParams(
@@ -131,9 +127,6 @@ class Bot:
 
             # Create welcome message
             print("Sending welcome message...")
-            # await self.task.queue_frames([
-            #     TTSSpeakFrame("Hello there, I am Codex. What do you want to ask about the document?"),
-            # ])
             await self.task.queue_frames([self.context_aggregator.user().get_context_frame()])
 
         @self.transport.event_handler("on_participant_left")
@@ -149,11 +142,13 @@ class Bot:
         # Use in pipeline
         pipeline = Pipeline([
             self.transport.input(),
-            self.speaking,
             self.stt_mute_filter,
+            self.rtvi_speaking,
             self.stt,
+            self.rtvi_user_transcription,
             self.context_aggregator.user(),
             self.llm,
+            self.rtvi_bot_transcription,
             self.tts,
             self.transport.output(),
             self.context_aggregator.assistant(),

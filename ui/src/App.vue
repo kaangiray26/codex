@@ -15,10 +15,10 @@
             <span class="placeholder" :loaded="store.document_loaded">
                 <github_alt />
                 <i>Upload a file to get started</i>
-                <!-- <Transition name="bounce">
-                    <img src="/speaking.gif" v-if="store.bot_speaking" />
-                </Transition> -->
             </span>
+            <div class="transcript-container">
+                <p>{{ store.transcripts[0] }}</p>
+            </div>
         </div>
         <div class="chat-input" :disabled="!store.connected">
             <label for="file">
@@ -35,7 +35,7 @@
             />
         </div>
     </main>
-    <Client ref="client" />
+    <Client ref="client" @transcript="handle_transcript" />
 </template>
 
 <script setup>
@@ -75,4 +75,16 @@ async function upload_file(event) {
     // Connect to the server
     await client.value.connect();
 }
+
+function handle_transcript(text) {
+    store.transcripts.push(text);
+}
+
+onMounted(() => {
+    setInterval(() => {
+        if (store.transcripts.length > 0) {
+            store.transcripts.shift();
+        }
+    }, 3000);
+});
 </script>

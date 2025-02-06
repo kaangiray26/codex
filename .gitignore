@@ -2,6 +2,7 @@
 .env
 __pycache__
 uploads
+storage
 docs
 *.db
 *.json

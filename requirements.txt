@@ -2,5 +2,7 @@ fastapi[standard]
 python-multipart
 sqlmodel
 llama-index
+llama-index-llms-openai
+markitdown
 aiohttp[speedups]
 pipecat-ai[daily,elevenlabs,google,silero,deepgram,cartesia,openai,websocket]
