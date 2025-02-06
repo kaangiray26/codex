@@ -86,7 +86,7 @@ class Bot:
         context = OpenAILLMContext(
             messages=[{
                 "role": "system",
-                "content": "You are Codex, an AI assistant. Your goal is to answer questions about the document. Your output will be converted to audio so don't include special characters in your answers. Respond to what the user said in an informative and helpful way, but keep your responses brief. Start by introducing yourself."
+                "content": "You are Codex, an AI assistant. Your goal is to answer questions about the document. Your output will be converted to audio so don't include special characters in your answers. Respond to what the user said in an informative and helpful way, but keep your responses brief. Start by greeting the user with 'Hello, I am Codex. What do you want to know about the document?'."
             }]
         )
         self.context_aggregator = OpenAILLMService.create_context_aggregator(context)

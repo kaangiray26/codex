@@ -1,15 +1,14 @@
 import os
-from typing import Literal, Dict, Any
 from pydantic import BaseModel
+from typing import Literal, Dict, Any
 
 # Llama Index
 from llama_index.core.query_engine import (
-    CitationQueryEngine,
-    RetrieverQueryEngine
+    CitationQueryEngine
 )
 from llama_index.core import (
-    StorageContext, load_index_from_storage,
-    get_response_synthesizer
+    StorageContext,
+    load_index_from_storage
 )
 from llama_index.core.vector_stores import (
     MetadataFilter,
@@ -17,7 +16,6 @@ from llama_index.core.vector_stores import (
 )
 
 # Pipecat
-from llama_index.core.response_synthesizers import ResponseMode
 from pipecat.processors.aggregators.openai_llm_context import (
     OpenAILLMContext,
     OpenAILLMContextFrame,
@@ -34,12 +32,11 @@ from pipecat.frames.frames import (
     LLMTextFrame
 )
 from pipecat.processors.frameworks.rtvi import (
-    RTVITextMessageData, TransportMessageUrgentFrame,
+    TransportMessageUrgentFrame,
     RTVIMessageLiteral, RTVI_MESSAGE_LABEL
 )
 from llama_index.core import Settings
 from llama_index.llms.openai import OpenAI
-from lib.engines.citated_query_engine import CitatedQueryEngine
 
 # Set the llm model
 Settings.llm = OpenAI(
@@ -72,11 +69,12 @@ class LlamaIndexService(LLMService):
         retriever = self.index.as_retriever(
             filters=filters
         )
-        self.query_engine = CitatedQueryEngine.from_args(
+        self.query_engine = CitationQueryEngine.from_args(
             index=self.index,
             similarity_top_k=3,
             retriever=retriever,
-            citation_chunk_size=128
+            citation_chunk_size=256,
+            streaming=True
         )
         print("Query engine created!")
 
@@ -94,20 +92,39 @@ class LlamaIndexService(LLMService):
         if not context.messages:
             return
 
-        print("Processing context...")
         message = context.messages[-1].get("content")
 
-        # Query the index
-        response = await self.query_engine.aquery(message)
-        await self.push_frame(LLMTextFrame(response.answer))
+        citations = []
+        getting_citation = False
+
+        # Query the engine
+        streaming_response = await self.query_engine.aquery(message)
+        async for response in streaming_response.response_gen:
+            text = response.strip()
+            if not len(text):
+                continue
+
+            if text.startswith("["):
+                getting_citation = True
+                continue
+
+            if text.startswith("]"):
+                getting_citation = False
+                await self.push_frame(LLMTextFrame("."))
+                continue
+
+            if getting_citation:
+                citations.append(int(text))
+                continue
+
+            print("Pushing response:", response)
+            await self.push_frame(LLMTextFrame(response))
+            getting_citation = False
 
         # Return the citations
         model = RTVICitationsMessage(
             data={
-                "extra":{
-                    "citations": response.citations,
-                    "sources": [response.source_nodes[i-1].node.text for i in response.citations]
-                }
+                "sources": [streaming_response.source_nodes[i-1].node.text for i in citations]
             }
         )
         await self.push_frame(
