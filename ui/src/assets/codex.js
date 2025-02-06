@@ -11,7 +11,8 @@ class Codex {
     // as we are not waiting for a response.
     // I'm looking at you, 'frontend developers'...
     connect() {
-        fetch(ADDRESS)
+        const address = `${ADDRESS}/check`;
+        fetch(address)
             .then((res) => {
                 if (res.ok) {
                     store.connected = true;

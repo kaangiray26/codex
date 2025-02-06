@@ -17,6 +17,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import SQLModel, Session, create_engine
 from fastapi import FastAPI, Request, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 # Database configuration
 engine = create_engine(sqlite_url, connect_args=connect_args)
@@ -42,10 +43,13 @@ async def lifespan(app: FastAPI):
 # Initialize the application
 app = FastAPI(lifespan=lifespan)
 
+# Serve the static files
+app.mount("/app", StaticFiles(directory="dist", html=True), name="app")
+
 # Configure CORS,
-# so that we can actually make requests :D
 origins = [
     "http://localhost",
+    "http://localhost:8000",
     "http://localhost:5173",
 ]
 app.add_middleware(
@@ -57,14 +61,9 @@ app.add_middleware(
 )
 
 # Routes
-@app.get("/")
-async def index():
-    return {
-        "success": True,
-        "data": {
-            "Welcome to Codex!"
-        }
-    }
+@app.get("/check")
+async def check():
+    return {"status": "ok"}
 
 @app.post("/upload")
 async def upload(
