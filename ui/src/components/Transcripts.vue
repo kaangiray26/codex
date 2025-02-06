@@ -6,6 +6,7 @@
 
 <script setup>
 import { ref, nextTick } from "vue";
+
 const queue = ref([]);
 const transcript = ref("");
 const is_processing = ref(false);
@@ -37,7 +38,14 @@ async function process_queue() {
     process_queue();
 }
 
+function clear() {
+    is_processing.value = false;
+    queue.value = [];
+    transcript.value = "";
+}
+
 defineExpose({
+    clear,
     add_transcript,
     process_queue,
 });

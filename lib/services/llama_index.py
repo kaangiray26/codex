@@ -110,7 +110,7 @@ class LlamaIndexService(LLMService):
 
             if text.startswith("]"):
                 getting_citation = False
-                await self.push_frame(LLMTextFrame("."))
+                await self.push_frame(LLMTextFrame(". "))
                 continue
 
             if getting_citation:

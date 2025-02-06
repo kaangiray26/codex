@@ -25,6 +25,7 @@
         ref="client"
         @transcript="handle_transcript"
         @started="handle_started"
+        @clear_transcripts="transcripts.clear"
     />
 </template>
 

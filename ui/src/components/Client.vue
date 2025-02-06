@@ -136,6 +136,7 @@ function setupEventListeners() {
 
     rtviClient.on(RTVIEvent.BotStoppedSpeaking, (track, participant) => {
         store.bot_speaking = false;
+        emit("clear_transcripts");
         console.info("Bot stopped speaking...");
     });
 }
