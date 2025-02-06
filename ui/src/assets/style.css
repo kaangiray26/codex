@@ -137,6 +137,9 @@ canvas {
     display: flex;
     justify-content: center;
     color: var(--text-muted);
+    padding: 0 1rem;
+    box-sizing: border-box;
+    word-break: break-word;
 }
 
 .chat-input {

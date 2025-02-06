@@ -62,7 +62,7 @@ import { RTVIClient, RTVIEvent } from "@pipecat-ai/client-js";
 import { DailyTransport } from "@pipecat-ai/daily-transport";
 import AudioMotionAnalyzer from "audiomotion-analyzer";
 
-const emit = defineEmits(["transcript"]);
+const emit = defineEmits(["transcript", "started"]);
 
 const audio = ref(null);
 const audioMotion = ref(null);
@@ -109,6 +109,13 @@ function setupEventListeners() {
         setupAudioTrack(track);
     });
 
+    // Listen for tracks stopping
+    rtviClient.on(RTVIEvent.TrackStopped, (track, participant) => {
+        console.info("Track stopped:", participant);
+        // if (participant?.local) return;
+        // audio.value.srcObject = null;
+    });
+
     // Transcripts
     rtviClient.on(RTVIEvent.UserTranscript, (data) => {
         console.log("User:", data.text);
@@ -120,20 +127,15 @@ function setupEventListeners() {
     });
 
     rtviClient.on(RTVIEvent.BotStartedSpeaking, (track, participant) => {
-        console.info("Bot speaking...");
         store.bot_speaking = true;
+        emit("started");
+        console.info("Bot speaking...");
     });
 
     rtviClient.on(RTVIEvent.BotStoppedSpeaking, (track, participant) => {
-        console.info("Bot stopped speaking...");
         store.bot_speaking = false;
+        console.info("Bot stopped speaking...");
     });
-
-    // Listen for tracks stopping
-    // rtviClient.on(RTVIEvent.TrackStopped, (track, participant) => {
-    //     if (participant?.local) return;
-    //     audio.value.srcObject = null;
-    // });
 }
 
 function setupAudioTrack(track) {
@@ -178,7 +180,7 @@ async function connect() {
 }
 
 onMounted(() => {
-    // Set audio source to "clubbed-to-death.mp3"
+    // Little easter egg
     // audio.value.src = "/clubbed-to-death.mp3";
     audio.value
         .play()
@@ -190,9 +192,8 @@ onMounted(() => {
             dialog.value.showModal();
         });
 
-    // Initialize AudioMotion
+    // Initialize AudioMotion for visualizer
     const container = document.querySelector(".chat-display");
-    console.log("Container:", container);
     audioMotion.value = new AudioMotionAnalyzer(container, {
         ansiBands: false,
         showScaleX: false,

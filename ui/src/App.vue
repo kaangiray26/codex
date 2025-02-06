@@ -16,13 +16,18 @@
                 <github_alt />
                 <i>Upload a file to get started</i>
             </span>
-            <div class="transcript-container">
-                <p>{{ store.transcripts[0] }}</p>
-            </div>
+            <Transcripts ref="transcripts" />
+            <!-- <div class="transcript-container">
+                <p>{{ store.transcripts.length ? store.transcripts[0].text : "" }}</p>
+            </div> -->
         </div>
         <ChatToolbar ref="chat_toolbar" @connect="handle_connect" />
     </main>
-    <Client ref="client" @transcript="handle_transcript" />
+    <Client
+        ref="client"
+        @transcript="handle_transcript"
+        @started="handle_started"
+    />
 </template>
 
 <script setup>
@@ -30,24 +35,26 @@ import { ref, onMounted, nextTick } from "vue";
 import { store } from "/src/assets/store.js";
 import Client from "./components/Client.vue";
 import ChatToolbar from "./components/ChatToolbar.vue";
+import Transcripts from "./components/Transcripts.vue";
 
 import github_alt from "./icons/github-alt.vue";
 
 const client = ref(null);
-
-function handle_transcript(text) {
-    store.transcripts.push(text);
-}
+const transcripts = ref([]);
 
 async function handle_connect() {
     await client.value.connect();
 }
 
+function handle_transcript(text) {
+    transcripts.value.add_transcript(text);
+}
+
+function handle_started() {
+    transcripts.value.process_queue();
+}
+
 onMounted(() => {
-    setInterval(() => {
-        if (store.transcripts.length > 0) {
-            store.transcripts.shift();
-        }
-    }, 3000);
+    // Periodically check the transcripts
 });
 </script>
