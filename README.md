@@ -100,7 +100,7 @@ pipeline = Pipeline([
 ])
 ```
 
-## Resources:
+## Resources
 
 - [pipecat](https://github.com/pipecat-ai/pipecat)
 - [LlamaIndex](https://docs.llamaindex.ai/en/stable/)

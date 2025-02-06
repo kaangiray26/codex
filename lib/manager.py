@@ -2,7 +2,6 @@ import time
 import aiohttp
 from lib.helpers import get_env
 from lib.models import Documents
-from lib.prompts import *
 
 # Daily REST API
 from pipecat.transports.services.helpers.daily_rest import (
